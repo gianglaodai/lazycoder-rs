@@ -1,0 +1,11 @@
+[package]
+name = "lazycoder-fe"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+leptos = { version = "0.8.2", features = ["csr", "ssr"] }
+leptos_actix = "0.8.2"
+reqwest = { version = "0.12.20", features = ["json"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
