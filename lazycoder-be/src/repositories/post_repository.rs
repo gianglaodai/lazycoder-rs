@@ -1,13 +1,16 @@
+use crate::define_orm_with_common_fields;
 use crate::services::post_service::Post;
 use sqlx::{PgPool, query, query_as};
-use crate::define_orm_with_common_fields;
 
 #[derive(Clone)]
 pub struct PostRepository {
     pool: PgPool,
 }
 
-define_orm_with_common_fields!(PostOrm {title: String,body: String,});
+define_orm_with_common_fields!(PostOrm {
+    title: String,
+    body: String,
+});
 
 impl From<PostOrm> for Post {
     fn from(orm: PostOrm) -> Self {
@@ -28,7 +31,7 @@ impl PostRepository {
     }
 
     pub async fn find_posts(&self) -> Result<Vec<Post>, sqlx::Error> {
-        let rows: Vec<PostOrm> = query_as::<_, PostOrm>("select id, title, body from posts")
+        let rows: Vec<PostOrm> = query_as::<_, PostOrm>("select id, uid, created_at, updated_at, title, body from posts")
             .fetch_all(&self.pool)
             .await?;
         Ok(rows.into_iter().map(Post::from).collect())
@@ -36,7 +39,7 @@ impl PostRepository {
 
     pub async fn find_post_by_id(&self, post_id: i32) -> Result<Post, sqlx::Error> {
         let row: PostOrm =
-            query_as::<_, PostOrm>("select id, title, body from posts where id = $1")
+            query_as::<_, PostOrm>("select id, uid, created_at, updated_at, title, body from posts where id = $1")
                 .bind(post_id)
                 .fetch_one(&self.pool)
                 .await?;
@@ -45,8 +48,11 @@ impl PostRepository {
 
     pub async fn create_post(&self, post: &Post) -> Result<Post, sqlx::Error> {
         let row: PostOrm = query_as::<_, PostOrm>(
-            "insert into posts (title, body) values ($1, $2) returning id, title, body",
+            "insert into posts (uid, created_at, updated_at, title, body) values ($1, $2, $3, $4, $5) returning id, uid, created_at, updated_at, title, body",
         )
+        .bind(uuid::Uuid::now_v7())
+        .bind(time::OffsetDateTime::now_utc())
+        .bind(time::OffsetDateTime::now_utc())
         .bind(&post.title)
         .bind(&post.body)
         .fetch_one(&self.pool)
@@ -56,9 +62,10 @@ impl PostRepository {
 
     pub async fn update_post(&self, post: &Post) -> Result<Post, sqlx::Error> {
         let row: PostOrm = query_as::<_, PostOrm>(
-            "update posts set title = $2, body = $3 where id = $1 returning id, title, body",
+            "update posts set updated_at = $2, title = $3, body = $4 where id = $1 returning id, uid, created_at, updated_at, title, body",
         )
         .bind(post.id.unwrap())
+        .bind(time::OffsetDateTime::now_utc())
         .bind(&post.title)
         .bind(&post.body)
         .fetch_one(&self.pool)

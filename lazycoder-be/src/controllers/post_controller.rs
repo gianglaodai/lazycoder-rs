@@ -54,10 +54,12 @@ pub async fn get_post_by_id(state: Data<AppState>, id: web::Path<i32>) -> impl R
 
 #[post("/")]
 pub async fn create_post(state: Data<AppState>, post: web::Json<PostTO>) -> impl Responder {
+    let post_to = post.into_inner();
+    println!("{:?}", post_to);
     respond_result(
         state
             .post_service
-            .create_post(Post::from(post.into_inner()))
+            .create_post(Post::from(post_to))
             .await
             .map(PostTO::from),
     )

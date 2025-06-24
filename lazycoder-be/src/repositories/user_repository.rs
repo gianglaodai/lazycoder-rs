@@ -49,12 +49,13 @@ impl UserRepository {
     }
 
     pub async fn creat_user(&self, user: &User) -> Result<User, sqlx::Error> {
+        let current = time::OffsetDateTime::now_utc();
         let row = query_as::<_, UserOrm>(
             "insert into users (uid, created_at, updated_at, username, email, password) values ($1, $2, $3, $4, $5, $6) returning id, uid, created_at, updated_at, username, email, password",
         )
-        .bind(&user.uid)
-        .bind(&user.created_at)
-        .bind(&user.updated_at)
+        .bind(uuid::Uuid::now_v7())
+        .bind(current)
+        .bind(current)
         .bind(&user.username)
         .bind(&user.email)
         .bind(&user.password)
@@ -68,7 +69,7 @@ impl UserRepository {
             "update users set updated_at = $2, username = $3, email = $4, password = $5 where id = $1 returning id, uid, created_at, updated_at, username, email, password",
         )
         .bind(user.id.unwrap())
-        .bind(&user.updated_at)
+        .bind(time::OffsetDateTime::now_utc())
         .bind(&user.username)
         .bind(&user.email)
         .bind(&user.password)
