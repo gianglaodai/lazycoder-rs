@@ -2,8 +2,8 @@ use crate::controllers::response_result::{respond_result, respond_results};
 use crate::define_to_with_common_fields;
 use crate::services::post_service::Post;
 use crate::state::AppState;
-use actix_web::web::Data;
-use actix_web::{Responder, delete, get, post, put, web};
+use actix_web::web::{Data, Json, Path, ServiceConfig, scope};
+use actix_web::{Responder, delete, get, post, put};
 
 define_to_with_common_fields!(PostTO {
     title: String,
@@ -42,7 +42,7 @@ pub async fn get_posts(state: Data<AppState>) -> impl Responder {
 }
 
 #[get("/{id}")]
-pub async fn get_post_by_id(state: Data<AppState>, id: web::Path<i32>) -> impl Responder {
+pub async fn get_post_by_id(state: Data<AppState>, id: Path<i32>) -> impl Responder {
     respond_result(
         state
             .post_service
@@ -53,20 +53,18 @@ pub async fn get_post_by_id(state: Data<AppState>, id: web::Path<i32>) -> impl R
 }
 
 #[post("/")]
-pub async fn create_post(state: Data<AppState>, post: web::Json<PostTO>) -> impl Responder {
-    let post_to = post.into_inner();
-    println!("{:?}", post_to);
+pub async fn create_post(state: Data<AppState>, post: Json<PostTO>) -> impl Responder {
     respond_result(
         state
             .post_service
-            .create_post(Post::from(post_to))
+            .create_post(Post::from(post.into_inner()))
             .await
             .map(PostTO::from),
     )
 }
 
 #[put("/{id}")]
-pub async fn update_post(state: Data<AppState>, post: web::Json<PostTO>) -> impl Responder {
+pub async fn update_post(state: Data<AppState>, post: Json<PostTO>) -> impl Responder {
     respond_result(
         state
             .post_service
@@ -77,13 +75,13 @@ pub async fn update_post(state: Data<AppState>, post: web::Json<PostTO>) -> impl
 }
 
 #[delete("/{id}")]
-pub async fn delete_post(state: Data<AppState>, id: web::Path<i32>) -> impl Responder {
+pub async fn delete_post(state: Data<AppState>, id: Path<i32>) -> impl Responder {
     respond_result(state.post_service.delete_post(id.into_inner()).await)
 }
 
-pub fn routes(cfg: &mut web::ServiceConfig) {
+pub fn routes(cfg: &mut ServiceConfig) {
     cfg.service(
-        web::scope("/posts")
+        scope("/posts")
             .service(get_posts)
             .service(get_post_by_id)
             .service(create_post)

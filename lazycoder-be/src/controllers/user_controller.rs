@@ -2,8 +2,8 @@ use crate::controllers::response_result::{respond_result, respond_results};
 use crate::define_to_with_common_fields;
 use crate::services::user_service::User;
 use crate::state::AppState;
-use actix_web::web::Data;
-use actix_web::{Responder, delete, get, post, put, web};
+use actix_web::web::{Data, Json, Path, ServiceConfig, scope};
+use actix_web::{Responder, delete, get, post, put};
 
 define_to_with_common_fields!(UserTO {
     username: String,
@@ -45,7 +45,7 @@ pub async fn get_users(state: Data<AppState>) -> impl Responder {
 }
 
 #[get("/{id}")]
-pub async fn get_user_by_id(state: Data<AppState>, id: web::Path<i32>) -> impl Responder {
+pub async fn get_user_by_id(state: Data<AppState>, id: Path<i32>) -> impl Responder {
     respond_result(
         state
             .user_service
@@ -56,7 +56,7 @@ pub async fn get_user_by_id(state: Data<AppState>, id: web::Path<i32>) -> impl R
 }
 
 #[post("/")]
-pub async fn create_user(state: Data<AppState>, user: web::Json<UserTO>) -> impl Responder {
+pub async fn create_user(state: Data<AppState>, user: Json<UserTO>) -> impl Responder {
     respond_result(
         state
             .user_service
@@ -67,7 +67,7 @@ pub async fn create_user(state: Data<AppState>, user: web::Json<UserTO>) -> impl
 }
 
 #[put("/{id}")]
-pub async fn update_user(state: Data<AppState>, user: web::Json<UserTO>) -> impl Responder {
+pub async fn update_user(state: Data<AppState>, user: Json<UserTO>) -> impl Responder {
     respond_result(
         state
             .user_service
@@ -78,13 +78,13 @@ pub async fn update_user(state: Data<AppState>, user: web::Json<UserTO>) -> impl
 }
 
 #[delete("/{id}")]
-pub async fn delete_user(state: Data<AppState>, id: web::Path<i32>) -> impl Responder {
+pub async fn delete_user(state: Data<AppState>, id: Path<i32>) -> impl Responder {
     respond_result(state.user_service.delete_user(id.into_inner()).await)
 }
 
-pub fn routes(cfg: &mut web::ServiceConfig) {
+pub fn routes(cfg: &mut ServiceConfig) {
     cfg.service(
-        web::scope("/users")
+        scope("/users")
             .service(get_users)
             .service(get_user_by_id)
             .service(create_user)

@@ -1,5 +1,5 @@
-use crate::{routes};
-use crate::state::{new_app_state};
+use crate::routes;
+use crate::state::new_app_state;
 use actix_session::SessionMiddleware;
 use actix_session::storage::CookieSessionStore;
 use actix_web::cookie::Key;
