@@ -37,55 +37,55 @@ impl From<Post> for PostTO {
 }
 
 #[get("/")]
-pub async fn get_posts(state: Data<AppState>) -> impl Responder {
-    respond_results(state.post_service.get_posts().await, PostTO::from)
+pub async fn get_many(state: Data<AppState>) -> impl Responder {
+    respond_results(state.post_service.get_many().await, PostTO::from)
 }
 
 #[get("/{id}")]
-pub async fn get_post_by_id(state: Data<AppState>, id: Path<i32>) -> impl Responder {
+pub async fn get_by_id(state: Data<AppState>, id: Path<i32>) -> impl Responder {
     respond_result(
         state
             .post_service
-            .get_post(id.into_inner())
+            .get_by_id(id.into_inner())
             .await
             .map(PostTO::from),
     )
 }
 
 #[post("/")]
-pub async fn create_post(state: Data<AppState>, post: Json<PostTO>) -> impl Responder {
+pub async fn create(state: Data<AppState>, post: Json<PostTO>) -> impl Responder {
     respond_result(
         state
             .post_service
-            .create_post(Post::from(post.into_inner()))
+            .create(Post::from(post.into_inner()))
             .await
             .map(PostTO::from),
     )
 }
 
 #[put("/{id}")]
-pub async fn update_post(state: Data<AppState>, post: Json<PostTO>) -> impl Responder {
+pub async fn update(state: Data<AppState>, post: Json<PostTO>) -> impl Responder {
     respond_result(
         state
             .post_service
-            .update_post(Post::from(post.into_inner()))
+            .update(Post::from(post.into_inner()))
             .await
             .map(PostTO::from),
     )
 }
 
 #[delete("/{id}")]
-pub async fn delete_post(state: Data<AppState>, id: Path<i32>) -> impl Responder {
-    respond_result(state.post_service.delete_post(id.into_inner()).await)
+pub async fn delete(state: Data<AppState>, id: Path<i32>) -> impl Responder {
+    respond_result(state.post_service.delete_by_id(id.into_inner()).await)
 }
 
 pub fn routes(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/posts")
-            .service(get_posts)
-            .service(get_post_by_id)
-            .service(create_post)
-            .service(update_post)
-            .service(delete_post),
+            .service(get_many)
+            .service(get_by_id)
+            .service(create)
+            .service(update)
+            .service(delete),
     );
 }

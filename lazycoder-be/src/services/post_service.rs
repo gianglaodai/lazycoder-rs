@@ -14,23 +14,23 @@ impl PostService {
         Self { post_repository }
     }
 
-    pub async fn get_posts(&self) -> Result<Vec<Post>, sqlx::Error> {
-        self.post_repository.find_posts().await
+    pub async fn get_many(&self) -> Result<Vec<Post>, sqlx::Error> {
+        self.post_repository.find_many().await
     }
 
-    pub async fn get_post(&self, id: i32) -> Result<Post, sqlx::Error> {
-        self.post_repository.find_post_by_id(id).await
+    pub async fn get_by_id(&self, id: i32) -> Result<Post, sqlx::Error> {
+        self.post_repository.find_by_id(id).await
     }
 
-    pub async fn create_post(&self, post: Post) -> Result<Post, sqlx::Error> {
-        self.post_repository.create_post(&post).await
+    pub async fn create(&self, post: Post) -> Result<Post, sqlx::Error> {
+        self.post_repository.create(&post).await
     }
 
-    pub async fn update_post(&self, post: Post) -> Result<Post, sqlx::Error> {
-        self.post_repository.update_post(&post).await
+    pub async fn update(&self, post: Post) -> Result<Post, sqlx::Error> {
+        self.post_repository.update(&post).await
     }
 
-    pub async fn delete_post(&self, id: i32) -> Result<u64, sqlx::Error> {
-        self.post_repository.delete_post(id).await
+    pub async fn delete_by_id(&self, id: i32) -> Result<u64, sqlx::Error> {
+        self.post_repository.delete(id).await
     }
 }

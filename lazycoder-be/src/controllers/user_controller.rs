@@ -40,55 +40,55 @@ impl From<User> for UserTO {
 }
 
 #[get("/")]
-pub async fn get_users(state: Data<AppState>) -> impl Responder {
-    respond_results(state.user_service.get_users().await, UserTO::from)
+pub async fn get_many(state: Data<AppState>) -> impl Responder {
+    respond_results(state.user_service.get_many().await, UserTO::from)
 }
 
 #[get("/{id}")]
-pub async fn get_user_by_id(state: Data<AppState>, id: Path<i32>) -> impl Responder {
+pub async fn get_by_id(state: Data<AppState>, id: Path<i32>) -> impl Responder {
     respond_result(
         state
             .user_service
-            .get_user_by_id(id.into_inner())
+            .get_by_id(id.into_inner())
             .await
             .map(UserTO::from),
     )
 }
 
 #[post("/")]
-pub async fn create_user(state: Data<AppState>, user: Json<UserTO>) -> impl Responder {
+pub async fn create(state: Data<AppState>, user: Json<UserTO>) -> impl Responder {
     respond_result(
         state
             .user_service
-            .create_user(User::from(user.into_inner()))
+            .create(User::from(user.into_inner()))
             .await
             .map(UserTO::from),
     )
 }
 
 #[put("/{id}")]
-pub async fn update_user(state: Data<AppState>, user: Json<UserTO>) -> impl Responder {
+pub async fn update(state: Data<AppState>, user: Json<UserTO>) -> impl Responder {
     respond_result(
         state
             .user_service
-            .update_user(User::from(user.into_inner()))
+            .update(User::from(user.into_inner()))
             .await
             .map(UserTO::from),
     )
 }
 
 #[delete("/{id}")]
-pub async fn delete_user(state: Data<AppState>, id: Path<i32>) -> impl Responder {
-    respond_result(state.user_service.delete_user(id.into_inner()).await)
+pub async fn delete_by_id(state: Data<AppState>, id: Path<i32>) -> impl Responder {
+    respond_result(state.user_service.delete(id.into_inner()).await)
 }
 
 pub fn routes(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/users")
-            .service(get_users)
-            .service(get_user_by_id)
-            .service(create_user)
-            .service(update_user)
-            .service(delete_user),
+            .service(get_many)
+            .service(get_by_id)
+            .service(create)
+            .service(update)
+            .service(delete_by_id),
     );
 }

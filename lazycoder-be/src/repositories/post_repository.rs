@@ -30,25 +30,25 @@ impl PostRepository {
         Self { pool }
     }
 
-    pub async fn find_posts(&self) -> Result<Vec<Post>, sqlx::Error> {
-        let rows: Vec<PostOrm> = query_as::<_, PostOrm>("select id, uid, created_at, updated_at, title, body from posts")
+    pub async fn find_many(&self) -> Result<Vec<Post>, sqlx::Error> {
+        let rows: Vec<PostOrm> = query_as::<_, PostOrm>("select * from posts")
             .fetch_all(&self.pool)
             .await?;
         Ok(rows.into_iter().map(Post::from).collect())
     }
 
-    pub async fn find_post_by_id(&self, post_id: i32) -> Result<Post, sqlx::Error> {
+    pub async fn find_by_id(&self, post_id: i32) -> Result<Post, sqlx::Error> {
         let row: PostOrm =
-            query_as::<_, PostOrm>("select id, uid, created_at, updated_at, title, body from posts where id = $1")
+            query_as::<_, PostOrm>("select * from posts where id = $1")
                 .bind(post_id)
                 .fetch_one(&self.pool)
                 .await?;
         Ok(Post::from(row))
     }
 
-    pub async fn create_post(&self, post: &Post) -> Result<Post, sqlx::Error> {
+    pub async fn create(&self, post: &Post) -> Result<Post, sqlx::Error> {
         let row: PostOrm = query_as::<_, PostOrm>(
-            "insert into posts (uid, created_at, updated_at, title, body) values ($1, $2, $3, $4, $5) returning id, uid, created_at, updated_at, title, body",
+            "insert into posts (uid, created_at, updated_at, title, body) values ($1, $2, $3, $4, $5) returning *",
         )
         .bind(uuid::Uuid::now_v7())
         .bind(time::OffsetDateTime::now_utc())
@@ -60,9 +60,9 @@ impl PostRepository {
         Ok(Post::from(row))
     }
 
-    pub async fn update_post(&self, post: &Post) -> Result<Post, sqlx::Error> {
+    pub async fn update(&self, post: &Post) -> Result<Post, sqlx::Error> {
         let row: PostOrm = query_as::<_, PostOrm>(
-            "update posts set updated_at = $2, title = $3, body = $4 where id = $1 returning id, uid, created_at, updated_at, title, body",
+            "update posts set updated_at = $2, title = $3, body = $4 where id = $1 returning *" 
         )
         .bind(post.id.unwrap())
         .bind(time::OffsetDateTime::now_utc())
@@ -73,7 +73,7 @@ impl PostRepository {
         Ok(Post::from(row))
     }
 
-    pub async fn delete_post(&self, post_id: i32) -> Result<u64, sqlx::Error> {
+    pub async fn delete(&self, post_id: i32) -> Result<u64, sqlx::Error> {
         let result = query("delete from posts where id = $1")
             .bind(post_id)
             .execute(&self.pool)
