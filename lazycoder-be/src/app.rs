@@ -1,13 +1,14 @@
-use crate::routes;
+use crate::{routes};
 use crate::state::{new_app_state};
 use actix_session::SessionMiddleware;
 use actix_session::storage::CookieSessionStore;
 use actix_web::cookie::Key;
 use actix_web::middleware::Logger;
 use actix_web::{App, HttpServer};
+use sqlx::PgPool;
 use tokio::join;
 
-pub async fn run() -> std::io::Result<()> {
+pub async fn run(pool: PgPool) -> std::io::Result<()> {
     let secret_key = Key::from(
         std::env::var("SECRET_KEY")
             .expect("SECRET_KEY must be set")
@@ -19,7 +20,7 @@ pub async fn run() -> std::io::Result<()> {
         .parse()
         .expect("PORT must be a valid u16");
 
-    let state = new_app_state().await;
+    let state = new_app_state(pool.clone()).await;
     let server = HttpServer::new(move || {
         App::new()
             .app_data(state.clone())

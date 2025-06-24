@@ -1,22 +1,21 @@
 use crate::services::post_service::Post;
 use sqlx::{PgPool, query, query_as};
+use crate::define_orm_with_common_fields;
 
 #[derive(Clone)]
 pub struct PostRepository {
     pool: PgPool,
 }
 
-#[derive(sqlx::FromRow)]
-pub struct PostOrm {
-    pub id: Option<i32>,
-    pub title: String,
-    pub body: String,
-}
+define_orm_with_common_fields!(PostOrm {title: String,body: String,});
 
 impl From<PostOrm> for Post {
     fn from(orm: PostOrm) -> Self {
         Self {
             id: orm.id,
+            uid: orm.uid,
+            created_at: orm.created_at,
+            updated_at: orm.updated_at,
             title: orm.title,
             body: orm.body,
         }
@@ -35,7 +34,7 @@ impl PostRepository {
         Ok(rows.into_iter().map(Post::from).collect())
     }
 
-    pub async fn find_post(&self, post_id: i32) -> Result<Post, sqlx::Error> {
+    pub async fn find_post_by_id(&self, post_id: i32) -> Result<Post, sqlx::Error> {
         let row: PostOrm =
             query_as::<_, PostOrm>("select id, title, body from posts where id = $1")
                 .bind(post_id)

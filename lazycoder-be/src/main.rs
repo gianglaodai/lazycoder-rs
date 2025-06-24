@@ -6,9 +6,12 @@ mod controllers;
 mod repositories;
 mod services;
 mod state;
+mod macros;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     config::init_env();
-    app::run().await
+    let pool = db::init_pool().await.expect("Failed to connect DB");
+    db::run_migrations(&pool).await.expect("Failed to run migrations");
+    app::run(pool).await
 }

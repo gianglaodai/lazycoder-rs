@@ -1,18 +1,35 @@
+use crate::controllers::response_result::{respond_result, respond_results};
+use crate::define_to_with_common_fields;
 use crate::services::post_service::Post;
 use crate::state::AppState;
 use actix_web::web::Data;
-use actix_web::{HttpResponse, Responder, delete, get, post, put, web};
+use actix_web::{Responder, delete, get, post, put, web};
 
-pub struct PostRequestBody {
-    pub id: Option<i32>,
-    pub title: String,
-    pub body: String,
-}
+define_to_with_common_fields!(PostTO {
+    title: String,
+    body: String,
+});
 
-impl From<PostRequestBody> for Post{
-    fn from(post: PostRequestBody) -> Self {
+impl From<PostTO> for Post {
+    fn from(post: PostTO) -> Self {
         Self {
             id: post.id,
+            uid: post.uid,
+            created_at: post.created_at,
+            updated_at: post.updated_at,
+            title: post.title,
+            body: post.body,
+        }
+    }
+}
+
+impl From<Post> for PostTO {
+    fn from(post: Post) -> Self {
+        Self {
+            id: post.id,
+            uid: post.uid,
+            created_at: post.created_at,
+            updated_at: post.updated_at,
             title: post.title,
             body: post.body,
         }
@@ -21,61 +38,52 @@ impl From<PostRequestBody> for Post{
 
 #[get("/")]
 pub async fn get_posts(state: Data<AppState>) -> impl Responder {
-    match state.post_service.get_posts().await {
-        Ok(posts) => HttpResponse::Ok().json(posts),
-        Err(_) => HttpResponse::InternalServerError().finish(),
-    }
+    respond_results(state.post_service.get_posts().await, PostTO::from)
 }
 
 #[get("/{id}")]
-pub async fn get_post(state: Data<AppState>, id: web::Path<i32>) -> impl Responder {
-    match state.post_service.get_post(id.into_inner()).await {
-        Ok(post) => HttpResponse::Ok().json(post),
-        Err(e) => {
-            log::error!("Failed to get post: {}", e);
-            HttpResponse::InternalServerError().body(e.to_string())
-        },
-    }
+pub async fn get_post_by_id(state: Data<AppState>, id: web::Path<i32>) -> impl Responder {
+    respond_result(
+        state
+            .post_service
+            .get_post(id.into_inner())
+            .await
+            .map(PostTO::from),
+    )
 }
 
 #[post("/")]
-pub async fn create_post(state: Data<AppState>, post: web::Json<Post>) -> impl Responder {
-    match state.post_service.create_post(post.into_inner()).await {
-        Ok(post) => HttpResponse::Ok().json(post),
-        Err(e) => {
-            log::error!("Failed to create post: {}", e);
-            HttpResponse::InternalServerError().body(e.to_string())
-        },
-    }
+pub async fn create_post(state: Data<AppState>, post: web::Json<PostTO>) -> impl Responder {
+    respond_result(
+        state
+            .post_service
+            .create_post(Post::from(post.into_inner()))
+            .await
+            .map(PostTO::from),
+    )
 }
 
 #[put("/{id}")]
-pub async fn update_post(state: Data<AppState>, post: web::Json<Post>) -> impl Responder {
-    match state.post_service.update_post(post.into_inner()).await {
-        Ok(post) => HttpResponse::Ok().json(post),
-        Err(e) => {
-            log::error!("Failed to update post: {}", e);
-            HttpResponse::InternalServerError().body(e.to_string())
-        },
-    }
+pub async fn update_post(state: Data<AppState>, post: web::Json<PostTO>) -> impl Responder {
+    respond_result(
+        state
+            .post_service
+            .update_post(Post::from(post.into_inner()))
+            .await
+            .map(PostTO::from),
+    )
 }
 
 #[delete("/{id}")]
 pub async fn delete_post(state: Data<AppState>, id: web::Path<i32>) -> impl Responder {
-    match state.post_service.delete_post(id.into_inner()).await {
-        Ok(effected_result) => HttpResponse::Ok().json(effected_result),
-        Err(e) => {
-            log::error!("Failed to delete post: {}", e);
-            HttpResponse::InternalServerError().body(e.to_string())
-        },
-    }
+    respond_result(state.post_service.delete_post(id.into_inner()).await)
 }
 
 pub fn routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/posts")
             .service(get_posts)
-            .service(get_post)
+            .service(get_post_by_id)
             .service(create_post)
             .service(update_post)
             .service(delete_post),

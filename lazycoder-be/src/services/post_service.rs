@@ -1,13 +1,8 @@
 use crate::repositories::post_repository::PostRepository;
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use crate::define_struct_with_common_fields;
 
-#[derive(Deserialize, Serialize, Debug)]
-pub struct Post {
-    pub id: Option<i32>,
-    pub title: String,
-    pub body: String,
-}
+define_struct_with_common_fields!(Post {title: String,body: String,});
 
 #[derive(Clone)]
 pub struct PostService {
@@ -24,7 +19,7 @@ impl PostService {
     }
 
     pub async fn get_post(&self, id: i32) -> Result<Post, sqlx::Error> {
-        self.post_repository.find_post(id).await
+        self.post_repository.find_post_by_id(id).await
     }
 
     pub async fn create_post(&self, post: Post) -> Result<Post, sqlx::Error> {
