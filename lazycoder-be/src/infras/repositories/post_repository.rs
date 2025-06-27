@@ -8,8 +8,8 @@ pub struct PostRepository {
 }
 
 define_orm_with_common_fields!(PostOrm {
-    title: String,
-    body: String,
+    pub title: String,
+    pub body: String,
 });
 
 impl From<PostOrm> for Post {

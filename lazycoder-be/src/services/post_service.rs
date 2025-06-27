@@ -1,8 +1,11 @@
-use crate::repositories::post_repository::PostRepository;
+use crate::infras::repositories::post_repository::PostRepository;
 use std::sync::Arc;
 use crate::define_struct_with_common_fields;
 
-define_struct_with_common_fields!(Post {title: String,body: String,});
+define_struct_with_common_fields!(Post {
+    pub title: String,
+    pub body: String,
+});
 
 #[derive(Clone)]
 pub struct PostService {

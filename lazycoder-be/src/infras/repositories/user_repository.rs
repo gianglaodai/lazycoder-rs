@@ -8,9 +8,9 @@ pub struct UserRepository {
 }
 
 define_orm_with_common_fields!(UserOrm {
-    username: String,
-    email: String,
-    password: String
+    pub username: String,
+    pub email: String,
+    pub password: String
 });
 
 impl From<UserOrm> for User {
@@ -63,7 +63,7 @@ impl UserRepository {
         .await?;
         Ok(User::from(row))
     }
-    
+
     pub async fn update(&self, user: &User) -> Result<User, sqlx::Error> {
         let row = query_as::<_, UserOrm>(
             "update users set updated_at = $2, username = $3, email = $4, password = $5 where id = $1 returning *",
@@ -77,12 +77,28 @@ impl UserRepository {
         .await?;
         Ok(User::from(row))
     }
-    
+
     pub async fn delete(&self, id: i32) -> Result<u64, sqlx::Error> {
         let result = query("delete from users where id = $1")
             .bind(id)
             .execute(&self.pool)
             .await?;
         Ok(result.rows_affected())
+    }
+
+    pub async fn find_by_username(&self, username: &str) -> Result<Option<User>, sqlx::Error> {
+        let row = query_as::<_, UserOrm>("select * from users where username = $1")
+            .bind(username)
+            .fetch_optional(&self.pool)
+            .await?;
+        Ok(row.map(User::from))
+    }
+
+    pub async fn find_by_email(&self, email: &str) -> Result<Option<User>, sqlx::Error> {
+        let row = query_as::<_, UserOrm>("select * from users where email = $1")
+            .bind(email)
+            .fetch_optional(&self.pool)
+            .await?;
+        Ok(row.map(User::from))
     }
 }

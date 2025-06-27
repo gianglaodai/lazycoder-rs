@@ -1,4 +1,4 @@
-use crate::controllers::response_result::{respond_result, respond_results};
+use crate::infras::controllers::response_result::{respond_result, respond_results};
 use crate::define_to_with_common_fields;
 use crate::services::user_service::User;
 use crate::state::AppState;
@@ -6,9 +6,10 @@ use actix_web::web::{Data, Json, Path, ServiceConfig, scope};
 use actix_web::{Responder, delete, get, post, put};
 
 define_to_with_common_fields!(UserTO {
-    username: String,
-    email: String,
-    password: String
+    pub username: String,
+    pub email: String,
+    #[serde(skip_serializing)]
+    pub password: String
 });
 
 impl From<UserTO> for User {

@@ -1,4 +1,4 @@
-use crate::controllers::response_result::{respond_result, respond_results};
+use crate::infras::controllers::response_result::{respond_result, respond_results};
 use crate::define_to_with_common_fields;
 use crate::services::post_service::Post;
 use crate::state::AppState;
@@ -6,8 +6,8 @@ use actix_web::web::{Data, Json, Path, ServiceConfig, scope};
 use actix_web::{Responder, delete, get, post, put};
 
 define_to_with_common_fields!(PostTO {
-    title: String,
-    body: String,
+    pub title: String,
+    pub body: String,
 });
 
 impl From<PostTO> for Post {

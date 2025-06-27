@@ -1,16 +1,19 @@
 use std::sync::Arc;
 use crate::define_struct_with_common_fields;
-use crate::repositories::user_repository::UserRepository;
+use crate::infras::repositories::user_repository::UserRepository;
 
 define_struct_with_common_fields!(User {
-    username: String,
-    email: String,
-    password: String
+    pub username: String,
+    pub email: String,
+    pub password: String
 });
 
 #[derive(Clone)]
 pub struct UserService {
     user_repository: Arc<UserRepository>,
+}
+
+impl UserService {
 }
 
 impl UserService {
@@ -38,5 +41,13 @@ impl UserService {
     
     pub async fn delete(&self, id: i32) -> Result<u64, sqlx::Error> {
         self.user_repository.delete(id).await
+    }
+
+    pub async fn get_by_email(&self, email: &str) -> Result<Option<User>, sqlx::Error> {
+       self.user_repository.find_by_email(email).await
+    }
+
+    pub async fn get_by_username(&self, username: &str) -> Result<Option<User>, sqlx::Error> {
+       self.user_repository.find_by_username(username).await
     }
 }
