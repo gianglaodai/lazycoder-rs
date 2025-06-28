@@ -1,15 +1,7 @@
 use crate::services::user_service::{User, UserService};
 use bcrypt::{DEFAULT_COST, hash, verify};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use time::{Duration, OffsetDateTime};
 
-#[derive(Debug)]
-pub struct Claims {
-    pub sub: String, // Subject (user ID)
-    pub exp: i64,    // Expiration time
-    pub iat: i64,    // Issued at
-}
 
 #[derive(Debug)]
 pub struct LoginRequest {
@@ -32,28 +24,16 @@ pub struct AuthResponse {
 #[derive(Clone)]
 pub struct AuthService {
     user_service: UserService,
-    encoder: Arc<JwtEncoder>,
-}
-
-pub struct JwtEncoder {
-    pub encode: Box<dyn Fn(&Claims) -> Result<String, String> + Send + Sync>,
-}
-
-impl JwtEncoder {
-    pub fn encode(&self, claims: &Claims) -> Result<String, String> {
-        (self.encode)(&claims)
-    }
 }
 
 impl AuthService {
-    pub fn new(user_service: UserService, encoder: Arc<JwtEncoder>) -> Self {
+    pub fn new(user_service: UserService) -> Self {
         Self {
             user_service,
-            encoder,
         }
     }
 
-    pub async fn login(&self, login_req: LoginRequest) -> Result<String, String> {
+    pub async fn login(&self, login_req: LoginRequest) -> Result<User, String> {
         // Find user by username
         let user_opt = self
             .user_service
@@ -70,12 +50,11 @@ impl AuthService {
         if !password_matches {
             return Err("Invalid username or password".to_string());
         }
-
-        // Generate JWT token
-        self.generate_token(&user.uid.unwrap().to_string())
+    
+        Ok(user)
     }
 
-    pub async fn register(&self, register_req: RegisterRequest) -> Result<String, String> {
+    pub async fn register(&self, register_req: RegisterRequest) -> Result<User, String> {
         // Check if username already exists
         if let Ok(Some(_)) = self
             .user_service
@@ -112,22 +91,6 @@ impl AuthService {
             .await
             .map_err(|e| format!("Failed to create user: {}", e))?;
 
-        // Generate JWT token
-        self.generate_token(&created_user.uid.unwrap().to_string())
-    }
-
-    fn generate_token(&self, user_id: &str) -> Result<String, String> {
-        let now = OffsetDateTime::now_utc();
-        let expiry = now + Duration::days(7); // Token valid for 7 days
-
-        let claims = Claims {
-            sub: user_id.to_string(),
-            exp: expiry.unix_timestamp(),
-            iat: now.unix_timestamp(),
-        };
-
-        self.encoder
-            .encode(&claims)
-            .map_err(|e| format!("Token generation error: {}", e))
+        Ok(created_user)
     }
 }

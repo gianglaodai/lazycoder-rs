@@ -8,7 +8,7 @@ use actix_web::{Responder, delete, get, post, put};
 define_to_with_common_fields!(UserTO {
     pub username: String,
     pub email: String,
-    #[serde(skip_serializing)]
+    #[serde(skip_serializing, default)]
     pub password: String
 });
 
